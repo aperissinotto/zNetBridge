@@ -1,0 +1,21 @@
+#ifndef ZNCNF_H
+#define ZNCNF_H
+
+#include <metal.h>
+#include <stddef.h>
+#include <string.h>
+
+#define ANCHOR_KEY "ZNETBRIDGE.ANCH"
+#define LENGTH_WTO 120
+#define PARM_WTO 4
+#define PARM_LENGTH 100
+#define ZN_TOK_LEVEL_TASK 1
+#define ZN_TOK_LEVEL_HOME 2
+#define ZN_TOK_LEN 16
+#define ZNBLK_EYECATCHER "ZNBLK   "
+#define EYEC_LENGTH 8
+#define ZNBLK_VERSION    1
+#define ZN_FLG_INITIALIZED 0x80000000
+#define ZN_FLG_DEBUG       0x40000000
+
+#endif

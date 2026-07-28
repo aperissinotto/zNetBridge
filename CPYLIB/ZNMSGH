@@ -1,13 +1,10 @@
 #ifndef ZNMSG_H
 #define ZNMSG_H
 
-#include <metal.h>
-#include <string.h>
-
 typedef struct Wto {
     unsigned short len_txt_wto;
     unsigned short flags_wto;
-    char txt_wto[133];
+    char txt_wto[LENGTH_WTO];
 } Wto;
 
 void zn_wto(const char* msg);

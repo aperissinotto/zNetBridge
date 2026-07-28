@@ -1,0 +1,79 @@
+#include "zncnfh.h"
+#include "zntokh.h"
+
+#pragma linkage(IEANTCR, OS)
+#pragma linkage(IEANTRT, OS)
+#pragma linkage(IEANTDL, OS)
+
+extern void IEANTCR(const int* level,
+                    const char* name,
+                    const char* token,
+                    const int* persist,
+                    int* rc);
+
+extern void IEANTRT(const int* level,
+                    const char* name,
+                    char* token,
+                    int* rc);
+
+extern void IEANTDL(const int* level,
+                    const char* name,
+                    int* rc);
+
+static void format_name(const char* src, char* dest) {
+    size_t len = strlen(src);
+    if (len > ZN_TOK_LEN) len = ZN_TOK_LEN;
+
+    memset(dest, ' ', ZN_TOK_LEN);
+    memcpy(dest, src, len);
+}
+
+int zn_tok_create(const char* name_str, void* ptr) {
+    int level = ZN_TOK_LEVEL_HOME;
+    int persist = 0;
+    int rc = 0;
+    char name[ZN_TOK_LEN];
+    char token[ZN_TOK_LEN] = {0};
+    unsigned long addr = (unsigned long)ptr;
+
+    if (!name_str || !ptr) return -1;
+
+    format_name(name_str, name);
+
+    memcpy(token, &addr, sizeof(addr));
+
+    IEANTCR(&level, name, token, &persist, &rc);
+    return rc;
+}
+
+void* zn_tok_get(const char* name_str) {
+    int level = ZN_TOK_LEVEL_HOME;
+    int rc = 0;
+    char name[ZN_TOK_LEN];
+    char token[ZN_TOK_LEN] = {0};
+    unsigned long addr = 0;
+
+    if (!name_str) return NULL;
+
+    format_name(name_str, name);
+
+    IEANTRT(&level, name, token, &rc);
+
+    if (rc != 0) return NULL;
+
+    memcpy(&addr, token, sizeof(addr));
+    return (void*)addr;
+}
+
+int zn_tok_delete(const char* name_str) {
+    int level = ZN_TOK_LEVEL_HOME;
+    int rc = 0;
+    char name[ZN_TOK_LEN];
+
+    if (!name_str) return -1;
+
+    format_name(name_str, name);
+
+    IEANTDL(&level, name, &rc);
+    return rc;
+}

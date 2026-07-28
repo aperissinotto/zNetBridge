@@ -1,0 +1,8 @@
+#ifndef ZNTOK_H
+#define ZNTOK_H
+
+int   zn_tok_create(const char *name_str, void *ptr);
+void* zn_tok_get(const char *name_str);
+int   zn_tok_delete(const char *name_str);
+
+#endif

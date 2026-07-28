@@ -1,0 +1,8 @@
+#ifndef ZNSTO_H
+#define ZNSTO_H
+
+void* zn_alloc(size_t size);
+void* zn_zalloc(size_t size);
+void  zn_free(void *ptr, size_t size);
+
+#endif

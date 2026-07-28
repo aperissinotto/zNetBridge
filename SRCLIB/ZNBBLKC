@@ -1,0 +1,65 @@
+#include "zncnfh.h"
+#include "znmsgh.h"
+#include "znstoh.h"
+#include "znblkh.h"
+
+ZNBLK* zn_blk_create(const char *parm_text, unsigned short parm_len) {
+    ZNBLK *blk;
+
+    blk = (ZNBLK *)zn_zalloc(sizeof(ZNBLK));
+    if (!blk) {
+        zn_wto("= ERRO ZNBLK: Falha ao alocar Anchor Block =");
+        return NULL;
+    }
+
+    memcpy(blk->eyecatcher, ZNBLK_EYECATCHER, EYEC_LENGTH);
+    blk->version = ZNBLK_VERSION;
+    blk->length  = (unsigned short)sizeof(ZNBLK);
+    blk->flags   = ZN_FLG_INITIALIZED;
+
+    if (parm_text && parm_len > 0) {
+        if (parm_len > 99) parm_len = 99;
+        strncpy(blk->parm_raw, parm_text, parm_len);
+        blk->parm_raw[parm_len] = '\0';
+        blk->parm_len = parm_len;
+    }
+
+    blk->msg_count = 0;
+    blk->err_count = 0;
+
+    return blk;
+}
+
+void zn_blk_print_status(const ZNBLK *blk) {
+    char status_buf[LENGTH_WTO] = {0};
+
+    if (!blk) {
+        zn_wto("= ZNBLK: Ponteiro NULO =");
+        return;
+    }
+
+    if (memcmp(blk->eyecatcher, ZNBLK_EYECATCHER,
+        EYEC_LENGTH) != 0) {
+       zn_wto("= ERRO ZNBLK: Memory Corruption (Eyecatcher"
+              " Invalido) =");
+       return;
+    }
+
+    zn_wto("= --- Estado do zNetBridge (ZNBLK) --- =");
+
+    strncpy(status_buf, "= PARM Ativo: '", sizeof(status_buf) - 1);
+    strncat(status_buf, blk->parm_raw,
+            sizeof(status_buf) - strlen(status_buf) - 1);
+    strncat(status_buf, "' =",
+            sizeof(status_buf) - strlen(status_buf) - 1);
+
+    zn_wto(status_buf);
+}
+
+void zn_blk_destroy(ZNBLK *blk) {
+    if (!blk) return;
+
+    memset(blk->eyecatcher, 0, EYEC_LENGTH);
+
+    zn_free(blk, sizeof(ZNBLK));
+}

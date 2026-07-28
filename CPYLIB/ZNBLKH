@@ -1,0 +1,23 @@
+#ifndef ZNBLK_H
+#define ZNBLK_H
+
+typedef struct ZNBLK {
+    char           eyecatcher[EYEC_LENGTH];
+    unsigned short version;
+    unsigned short length;
+    unsigned int   flags;
+
+    char           parm_raw[PARM_LENGTH];
+    unsigned short parm_len;
+
+    unsigned long  msg_count;
+    unsigned long  err_count;
+} ZNBLK;
+
+ZNBLK* zn_blk_create(const char* parm_text, unsigned short parm_len);
+
+void zn_blk_print_status(const ZNBLK* blk);
+
+void zn_blk_destroy(ZNBLK* blk);
+
+#endif

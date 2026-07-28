@@ -1,28 +1,26 @@
-#include <metal.h>
+#include "zncnfh.h"
+#include "znblkh.h"
 #include "znmsgh.h"
+#include "znstoh.h"
+#include "zntokh.h"
 
 typedef struct MVS_PARM_BLOCK {
     unsigned short length;
-    char text[100];
+    char text[PARM_LENGTH];
 } MVS_PARM_BLOCK;
 
-int main(MVS_PARM_BLOCK *raw_parm_ptr) {
-    MVS_PARM_BLOCK *parm_ptr;
+int main(MVS_PARM_BLOCK* raw_parm_ptr) {
+    MVS_PARM_BLOCK* parm_ptr;
     unsigned long addr;
+    ZNBLK *zn_anchor = NULL;
+    ZNBLK *retrieved_anchor = NULL;
+    int rc;
 
-    const char msg001[] = "= zNetBridge: Inicializando Modulo "
-                          "Principal =";
-
-    const char msg002[] = "= Nenhum PARM especificado no JCL =";
-
-    const char msg003_i[] = "= PARM Recebido -> '";
-    const char msg003_f[] = "' =";
-    char msg003[133];
-
-    zn_wto(msg001);
+    zn_wto("= zNetBridge: Inicializando Modulo "
+           "Principal =");
 
     if (!raw_parm_ptr) {
-       zn_wto(msg002);
+       zn_wto("= Nenhum PARM especificado no JCL =");
        return 1;
     }
 
@@ -30,18 +28,44 @@ int main(MVS_PARM_BLOCK *raw_parm_ptr) {
     parm_ptr = (MVS_PARM_BLOCK *)addr;
 
     if (!parm_ptr) {
-       zn_wto(msg002);
+       zn_wto("= Nenhum PARM especificado no JCL =");
        return 2;
     }
 
     if (parm_ptr->length == 0) {
-       zn_wto(msg002);
+       zn_wto("= Nenhum PARM especificado no JCL =");
        return 3;
     }
 
-    strncpy(msg003, msg003_i, strlen(msg003_i));
-    strncat(msg003, parm_ptr->text, parm_ptr->length);
-    strncat(msg003, msg003_f, strlen(msg003_f));
-    zn_wto(msg003);
+    zn_anchor = zn_blk_create(parm_ptr->text, parm_ptr->length);
+    if (!zn_anchor) {
+        zn_wto("= ERRO FATAL: Nao foi possivel instanciar ZNBLK =");
+        return 4;
+    }
+
+    rc = zn_tok_create(ANCHOR_KEY, zn_anchor);
+    if (rc != 0) {
+        zn_wto("= ERRO: Falha ao registrar Name/Token =");
+        zn_blk_destroy(zn_anchor);
+        return 5;
+    }
+    zn_wto("= Name/Token registrado [ZNETBRIDGE.ANCH] =");
+
+    retrieved_anchor = (ZNBLK*)zn_tok_get(ANCHOR_KEY);
+    if (retrieved_anchor != NULL) {
+        zn_wto("= Sucesso: ZNBLK localizado via Name/Token! =");
+        zn_blk_print_status(retrieved_anchor);
+    } else {
+        zn_wto("= ERRO: Falha ao buscar Token no z/OS =");
+        return 6;
+    }
+
+    zn_tok_delete(ANCHOR_KEY);
+    zn_blk_destroy(zn_anchor);
+    zn_anchor = NULL;
+
+    zn_wto("= zNetBridge: Anchor Block destruido e finalizado"
+           " (RC=0) =");
+
     return 0;
 }
