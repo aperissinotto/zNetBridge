@@ -1,0 +1,47 @@
+#include <metal.h>
+#include "znmsgh.h"
+
+typedef struct MVS_PARM_BLOCK {
+    unsigned short length;
+    char text[100];
+} MVS_PARM_BLOCK;
+
+int main(MVS_PARM_BLOCK *raw_parm_ptr) {
+    MVS_PARM_BLOCK *parm_ptr;
+    unsigned long addr;
+
+    const char msg001[] = "= zNetBridge: Inicializando Modulo "
+                          "Principal =";
+
+    const char msg002[] = "= Nenhum PARM especificado no JCL =";
+
+    const char msg003_i[] = "= PARM Recebido -> '";
+    const char msg003_f[] = "' =";
+    char msg003[133];
+
+    zn_wto(msg001);
+
+    if (!raw_parm_ptr) {
+       zn_wto(msg002);
+       return 1;
+    }
+
+    addr = (unsigned long)raw_parm_ptr & 0x7FFFFFFF;
+    parm_ptr = (MVS_PARM_BLOCK *)addr;
+
+    if (!parm_ptr) {
+       zn_wto(msg002);
+       return 2;
+    }
+
+    if (parm_ptr->length == 0) {
+       zn_wto(msg002);
+       return 3;
+    }
+
+    strncpy(msg003, msg003_i, strlen(msg003_i));
+    strncat(msg003, parm_ptr->text, parm_ptr->length);
+    strncat(msg003, msg003_f, strlen(msg003_f));
+    zn_wto(msg003);
+    return 0;
+}

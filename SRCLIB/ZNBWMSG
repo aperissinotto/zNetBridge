@@ -1,0 +1,22 @@
+#include "znmsgh.h"
+
+void zn_wto(const char* msg)
+{
+    if (!msg) return;
+    if (strlen(msg) > 133) return;
+
+    Wto Wto_buf;
+
+    memset(&Wto_buf,0,sizeof(Wto_buf));
+
+    Wto_buf.len_txt_wto = strlen(msg) + 4;
+    Wto_buf.flags_wto   = 0;
+    strncpy(Wto_buf.txt_wto, msg, strlen(msg));
+
+    __asm (" LA 1,%0 \n "
+           " SVC 35 "
+           :
+           : "m"(Wto_buf)
+           : "r0", "r1", "r14", "r15"
+          );
+}
