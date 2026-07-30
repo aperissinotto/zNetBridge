@@ -1,0 +1,112 @@
+*---------------------------------------------------------------------*
+* ZNBFILEA - MODULO HLASM PARA I/O QSAM (DD CONFIG)                   *
+*---------------------------------------------------------------------*
+         PRINT NOGEN
+ZNBFILE  CSECT
+ZNBFILE  AMODE 31
+ZNBFILE  RMODE 24
+
+*---------------------------------------------------------------------*
+* ZNFILEOP: ABRE A DD CONFIG                                          *
+*---------------------------------------------------------------------*
+         ENTRY ZNFILEOP
+ZNFILEOP DS    0H
+         STM   14,12,12(13)
+         LR    12,15
+         USING ZNFILEOP,12
+         ST    13,SAVEOP+4
+         LA    2,SAVEOP
+         ST    2,8(,13)
+         LR    13,2
+*
+         XC    EOF_FLAG,EOF_FLAG
+         OPEN  (CONFDCB,(INPUT)),MODE=31
+         TM    CONFDCB+48,X'10'
+         BO    OPEN_OK
+         LA    15,8
+         B     OPEN_RET
+OPEN_OK  SR    15,15
+OPEN_RET L     13,SAVEOP+4
+         ST    15,16(,13)       * RETORNA RC NO R15 DO C
+         LM    14,12,12(13)
+         BR    14
+         DROP  12
+
+*---------------------------------------------------------------------*
+* ZNFILERD: LE REGISTRO (R1 -> BUFFER DE 80 BYTES)                   *
+*---------------------------------------------------------------------*
+         ENTRY ZNFILERD
+ZNFILERD DS    0H
+         STM   14,12,12(13)
+         LR    12,15
+         USING ZNFILERD,12
+         L     2,0(,1)          * CAPTURA ENDERECO DO BUFFER (R1)
+         ST    13,SAVERD+4
+         LA    3,SAVERD
+         ST    3,8(,13)
+         LR    13,3
+*
+         CLC   EOF_FLAG,=F'0'
+         BNE   READ_EOF
+         GET   CONFDCB,(2)      * LE REGISTRO DIRETO NO BUFFER
+         CLC   EOF_FLAG,=F'0'
+         BNE   READ_EOF
+         SR    15,15
+         B     READ_RET
+READ_EOF LA    15,4
+READ_RET L     13,SAVERD+4
+         ST    15,16(,13)       * RETORNA RC NO R15 DO C
+         LM    14,12,12(13)
+         BR    14
+         DROP  12
+
+*---------------------------------------------------------------------*
+* ZNFILECL: FECHA A DD CONFIG                                         *
+*---------------------------------------------------------------------*
+         ENTRY ZNFILECL
+ZNFILECL DS    0H
+         STM   14,12,12(13)
+         LR    12,15
+         USING ZNFILECL,12
+         ST    13,SAVECL+4
+         LA    2,SAVECL
+         ST    2,8(,13)
+         LR    13,2
+*
+         CLOSE (CONFDCB),MODE=31
+         SR    15,15
+         L     13,SAVECL+4
+         ST    15,16(,13)       * RETORNA RC NO R15 DO C
+         LM    14,12,12(13)
+         BR    14
+         DROP  12
+
+*---------------------------------------------------------------------*
+* ON_EOF: TRATADOR DE FIM DE ARQUIVO (EODAD) SEM DEPENDENCIA DE R15   *
+*---------------------------------------------------------------------*
+ON_EOF   DS    0H
+         PUSH  USING
+         DROP
+         BRAS  15,PAST_EOD
+PAST_EOD DS    0H
+         USING PAST_EOD,15
+         MVI   EOF_FLAG+3,1
+         POP   USING
+         BR    14
+
+*---------------------------------------------------------------------*
+* ESTRUTURAS DE MEMORIA (ABAIXO DA LINHA DE 16MB)                     *
+*---------------------------------------------------------------------*
+         DS    0D
+SAVEOP   DC    18F'0'
+SAVERD   DC    18F'0'
+SAVECL   DC    18F'0'
+EOF_FLAG DC    F'0'
+CONFDCB  DCB   DSORG=PS,                                               X
+               MACRF=(GM),                                             X
+               DDNAME=CONFIG,                                          X
+               RECFM=FB,                                               X
+               LRECL=80,                                               X
+               BLKSIZE=80,                                             X
+               EODAD=ON_EOF
+         END

@@ -1,0 +1,40 @@
+#include "zncnfh.h"
+#include "znesxh.h"
+
+int zn_estaex_on(void) {
+    int rc = 0;
+    __asm (
+        "         BRAS  1,PASTEXIT        \n"
+        "         DS    0H                \n"
+        "ZNEXIT   DS    0H                \n"
+        "         PUSH  USING             \n"
+        "         DROP                    \n"
+        "         USING ZNEXIT,15         \n"
+        "         STM   14,12,12(13)      \n"
+        "         WTO   '= zNetBridge: ESTAEX Interceptou "
+        "ABEND! ='\n"
+        "         LM    14,12,12(13)      \n"
+        "         XR    15,15             \n"
+        "         BR    14                \n"
+        "         DROP  15                \n"
+        "         POP   USING             \n"
+        "PASTEXIT DS    0H                \n"
+        "         LR    0,1               \n"
+        "         ESTAEX (0)              \n"
+        "         ST    15,%0             \n"
+        : "=m"(rc)
+        :
+        : "r0", "r1", "r14", "r15"
+    );
+
+    return rc;
+}
+
+void zn_estaex_off(void) {
+    __asm (
+        "         ESTAEX 0                \n"
+        :
+        :
+        : "r0", "r1", "r14", "r15"
+    );
+}

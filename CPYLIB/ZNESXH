@@ -1,0 +1,7 @@
+#ifndef ZNESX_H
+#define ZNESX_H
+
+int  zn_estaex_on(void);
+void zn_estaex_off(void);
+
+#endif

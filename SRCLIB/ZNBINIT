@@ -3,6 +3,8 @@
 #include "znmsgh.h"
 #include "znstoh.h"
 #include "zntokh.h"
+#include "znesxh.h"
+#include "znfilh.h"
 
 typedef struct MVS_PARM_BLOCK {
     unsigned short length;
@@ -14,10 +16,18 @@ int main(MVS_PARM_BLOCK* raw_parm_ptr) {
     unsigned long addr;
     ZNBLK *zn_anchor = NULL;
     ZNBLK *retrieved_anchor = NULL;
+    char line_buf[81];
     int rc;
 
     zn_wto("= zNetBridge: Inicializando Modulo "
            "Principal =");
+
+    rc = zn_estaex_on();
+    if (rc != 0) {
+        zn_wto("= ERRO: Falha ao ativar ESTAEX =");
+        return 1;
+    }
+    zn_wto("= Protecao ESTAEX ativada com sucesso =");
 
     if (!raw_parm_ptr) {
        zn_wto("= Nenhum PARM especificado no JCL =");
@@ -60,9 +70,27 @@ int main(MVS_PARM_BLOCK* raw_parm_ptr) {
         return 6;
     }
 
+    if (ZNFILEOP() == 0) {
+        zn_wto("= Lendo arquivo //CONFIG =");
+        while (1) {
+            memset(line_buf, ' ', 80);
+            line_buf[80] = '\0';
+            rc = ZNFILERD(line_buf);
+            if (rc != 0) break;
+            zn_wto(line_buf);
+        }
+        ZNFILECL();
+        zn_wto("= Leitura concluida com sucesso =");
+    } else {
+        zn_wto("= AVISO: DD CONFIG nao encontrada no JCL =");
+    }
+
     zn_tok_delete(ANCHOR_KEY);
     zn_blk_destroy(zn_anchor);
     zn_anchor = NULL;
+
+    zn_estaex_off();
+    zn_wto("= Protecao ESTAEX desativada =");
 
     zn_wto("= zNetBridge: Anchor Block destruido e finalizado"
            " (RC=0) =");
